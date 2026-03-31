@@ -6,10 +6,16 @@ import java.util.Random;
 public class DodgeHandler extends DefenseHandler {
 
     private double dodgeChance;
-    private Random random = new Random();
+    private Random random;
 
     public DodgeHandler(double dodgeChance) {
         this.dodgeChance = dodgeChance;
+        this.random = new Random();
+    }
+
+    public DodgeHandler(double dodgeChance, long seed) {
+        this.dodgeChance = dodgeChance;
+        this.random = new Random(seed);
     }
 
     @Override

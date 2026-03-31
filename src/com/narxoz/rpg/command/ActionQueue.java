@@ -1,32 +1,32 @@
 package com.narxoz.rpg.command;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ActionQueue {
-    private final List<ActionCommand> queue = new ArrayList<>();
+
+    private List<ActionCommand> commands = new ArrayList<>();
 
     public void enqueue(ActionCommand cmd) {
-        // TODO: Add the command to the end of the queue.
+        commands.add(cmd);
     }
 
     public void undoLast() {
-        // TODO: Remove the last queued command without executing it.
-        // Design question: should cmd.undo() be called, or is it simply removed?
-        // For this assignment: just remove the last entry from the queue.
-        // Hint: List has a remove(int index) method — think about which index is "last".
+        if (!commands.isEmpty()) {
+            commands.remove(commands.size() - 1);
+        }
     }
 
     public void executeAll() {
-        // TODO: Call execute() on every command in the queue, in order.
-        // TODO: Clear the queue after all commands have run.
-        // TODO: What should happen if the queue is empty?
+        for (ActionCommand cmd : commands) {
+            cmd.execute();
+        }
+        commands.clear();
     }
 
     public List<String> getCommandDescriptions() {
-        // TODO: Return a snapshot list of descriptions for all queued commands.
-        // TODO: Use cmd.getDescription() for each command.
-        // Note: the returned list must be independent — modifying it must not affect the queue.
-        return new ArrayList<>();
+        List<String> list = new ArrayList<>();
+        for (ActionCommand c : commands) {
+            list.add(c.getDescription());
+        }
+        return list;
     }
 }
