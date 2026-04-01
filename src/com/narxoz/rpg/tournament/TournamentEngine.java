@@ -15,53 +15,44 @@ import com.narxoz.rpg.command.HealCommand;
 import java.util.Random;
 
 public class TournamentEngine {
-    private final ArenaFighter hero;
-    private final ArenaOpponent opponent;
-    private Random random = new Random(1L);
 
-    public TournamentEngine(ArenaFighter hero, ArenaOpponent opponent) {
-        this.hero = hero;
-        this.opponent = opponent;
-    }
+    public TournamentResult runTournament(ArenaFighter hero, ArenaOpponent enemy) {
 
-    public TournamentEngine setRandomSeed(long seed) {
-        this.random = new Random(seed);
-        return this;
-    }
-
-    public TournamentResult runTournament() {
         TournamentResult result = new TournamentResult();
+
+        DefenseHandler chain =
+                new DodgeHandler(hero.getDodgeChance())
+                .setNext(new BlockHandler(hero.getBlockRating() / 100.0))
+                .setNext(new ArmorHandler(hero.getArmorValue()))
+                .setNext(new HpHandler());
+
         int round = 0;
-        final int maxRounds = 20;
+        int maxRounds = 20;
 
-        DefenseHandler dodge = new DodgeHandler(hero.getDodgeChance(), random.nextLong());
-        DefenseHandler block = new BlockHandler(hero.getBlockRating() / 100.0);
-        DefenseHandler armor = new ArmorHandler(hero.getArmorValue());
-        DefenseHandler hp = new HpHandler();
-        dodge.setNext(block).setNext(armor).setNext(hp);
-
-        ActionQueue actionQueue = new ActionQueue();
-
-        while (hero.isAlive() && opponent.isAlive() && round < maxRounds) {
+        while (hero.isAlive() && enemy.isAlive() && round < maxRounds) {
             round++;
+            result.addLine("Round " + round);
 
-            actionQueue.enqueue(new AttackCommand(opponent, hero.getAttackPower()));
-            actionQueue.enqueue(new HealCommand(hero, 15));
-            actionQueue.enqueue(new DefendCommand(hero, 0.10));
+            ActionQueue queue = new ActionQueue();
+            queue.enqueue(new AttackCommand(enemy, hero.getAttackPower()));
+            queue.enqueue(new HealCommand(hero, 15));
+            queue.enqueue(new DefendCommand(hero, 0.1));
 
-            result.addLine(String.format("[Round %d] Queued: %s", round, actionQueue.getCommandDescriptions()));
-            actionQueue.executeAll();
+            result.addLine(queue.getCommandDescriptions().toString());
+            queue.executeAll();
 
-            if (opponent.isAlive()) {
-                dodge.handle(opponent.getAttackPower(), hero);
+            if (enemy.isAlive()) {
+                chain.handle(enemy.getAttackPower(), hero);
             }
 
-            String line = String.format("[Round %d] Opponent HP: %d | Hero HP: %d", round, opponent.getHealth(), hero.getHealth());
-            result.addLine(line);
+            result.addLine(String.format("Opponent HP: %d | Hero HP: %d", enemy.getHealth(), hero.getHealth()));
         }
 
-        result.setWinner(hero.isAlive() ? hero.getName() : opponent.getName());
+        if (hero.isAlive()) result.setWinner(hero.getName());
+        else result.setWinner(enemy.getName());
+
         result.setRounds(round);
+
         return result;
     }
 }
